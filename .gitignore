@@ -1,7 +1,10 @@
 
-audio/
+audios/
 downloads/
 models/
+translations/
+transcriptions/
+recordings/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

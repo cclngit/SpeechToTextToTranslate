@@ -3,7 +3,7 @@ import transformers
 import librosa
 
 # Load and resample the audio file.
-audio, _ = librosa.load("audio/POV_Mini-Stories.mp3", sr=16000, mono=True)
+audio, _ = librosa.load("audios/POV_Mini-Stories.mp3", sr=16000, mono=True)
 
 # Compute the features of the first 30 seconds of audio.
 processor = transformers.WhisperProcessor.from_pretrained("openai/whisper-tiny")

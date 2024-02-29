@@ -2,17 +2,16 @@ import ctranslate2
 import librosa
 import transformers
 
-
 # Load and resample the audio file.
-audio, _ = librosa.load("audio/POV_Mini-Stories.mp3", sr=16000, mono=True)
+audio, _ = librosa.load("audios/POV_Mini-Stories.mp3", sr=16000, mono=True)
+
+# Load the model on CPU.
+model = ctranslate2.models.Whisper("models/faster-whisper-tiny")
 
 # Compute the features of the first 30 seconds of audio.
 processor = transformers.WhisperProcessor.from_pretrained("openai/whisper-tiny")
 inputs = processor(audio, return_tensors="np", sampling_rate=16000)
 features = ctranslate2.StorageView.from_array(inputs.input_features)
-
-# Load the model on CPU.
-model = ctranslate2.models.Whisper("models/faster-whisper-tiny")
 
 # Detect the language.
 results = model.detect_language(features)
