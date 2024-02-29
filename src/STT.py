@@ -72,3 +72,5 @@ try:
 except KeyboardInterrupt:
     print('Transcription stopped')
     exit(0)
+
+# Path: src/STT.py
