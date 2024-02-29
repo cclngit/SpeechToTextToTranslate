@@ -58,16 +58,12 @@ try:
             transcription = processor.decode(results[0].sequences_ids[0])
             
             filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".txt"
-            with open(f"./transcriptions/{filename}", "w") as f:
-                f.write(transcription)
+            #with open(f"./transcriptions/{filename}", "w") as f:
+                #f.write(transcription)
 
             # append text to transcript file
-            #with open('./transcriptions/transcript.txt', 'a') as f:
-                #f.write(transcription)
-        
-            # save list of transcribed recordings so that we don't transcribe the same one again
-            transcribed.append(latest_recording)
-            print(f"Transcription saved for {latest_recording_filename}")
+            with open('./transcriptions/transcript.txt', 'a') as f:
+                f.write(transcription + '\n')
             
 except KeyboardInterrupt:
     print('Transcription stopped')
