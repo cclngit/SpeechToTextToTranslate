@@ -17,7 +17,7 @@ To install the required dependencies, please follow the instructions below.
 1. Clone this repository:
 
     ```bash
-    git clone -b better https://github.com/cclngit/SpeechToTextToTranslate.git
+    git clone -b main https://github.com/cclngit/SpeechToTextToTranslate.git
     ```
 
 2. Navigate to the project directory:
