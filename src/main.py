@@ -7,6 +7,7 @@ import translate
 import transcribe
 import json
 import server
+import time
 
 def delete_old_files(directory, num_to_keep=10):
     files = sorted(glob.iglob(directory), key=os.path.getctime, reverse=True)
@@ -18,6 +19,34 @@ def load_config(filename):
     with open(filename, 'r') as f:
         config = json.load(f)
     return config
+
+def record_and_save_wrapper(queue1, recordings_dir, freq, duration):
+    while True:
+        try:
+            record_and_save.record_and_save(queue1, recordings_dir, freq, duration)
+        except Exception as e:
+            print(f"Recording thread failed: {e}")
+
+def transcribe_wrapper(queue1, queue2, processor, model_path):
+    while True:
+        try:
+            transcribe.transcribe(queue1, queue2, processor, model_path)
+        except Exception as e:
+            print(f"Transcription thread failed: {e}")
+
+def translate_wrapper(queue2, queue3, translations_dir, src_lang, tgt_lang, translator, tokenizer, device):
+    while True:
+        try:
+            translate.translate(queue2, queue3, translations_dir, src_lang, tgt_lang, translator, tokenizer, device)
+        except Exception as e:
+            print(f"Translation thread failed: {e}")
+
+def server_wrapper(queue3):
+    while True:
+        try:
+            server.run_server(queue3)
+        except Exception as e:
+            print(f"Server thread failed: {e}")
 
 def run_pipeline(config):
     recordings_dir = config["recordings_dir"]
@@ -49,17 +78,21 @@ def run_pipeline(config):
     queue3 = queue.Queue()
 
     threads = [
-        threading.Thread(target=record_and_save.record_and_save, args=(queue1, recordings_dir, freq, duration)),
-        threading.Thread(target=transcribe.transcribe, args=(queue1, queue2, processor, model_path)),
-        threading.Thread(target=translate.translate, args=(queue2, queue3, translations_dir, src_lang, tgt_lang, translator, tokenizer, device)),
-        threading.Thread(target=server.run_server, args=(queue3,))
+        threading.Thread(target=record_and_save_wrapper, args=(queue1, recordings_dir, freq, duration)),
+        threading.Thread(target=transcribe_wrapper, args=(queue1, queue2, processor, model_path)),
+        threading.Thread(target=translate_wrapper, args=(queue2, queue3, translations_dir, src_lang, tgt_lang, translator, tokenizer, device)),
+        threading.Thread(target=server_wrapper, args=(queue3,))
     ]
 
     for thread in threads:
         thread.start()
 
-    for thread in threads:
-        thread.join()
+    # Monitor threads and restart if they fail
+    while True:
+        for thread in threads:
+            if not thread.is_alive():
+                thread.start()
+        time.sleep(10)  # Check every 10 seconds
 
 if __name__ == '__main__':
     try:

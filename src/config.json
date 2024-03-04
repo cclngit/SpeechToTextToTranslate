@@ -1,4 +1,3 @@
-
 {
     "recordings_dir": "./recordings",
     "transcriptions_dir": "./transcriptions",
@@ -9,12 +8,11 @@
       "duration": 3
     },
     "transcribe": {
-      "model": "tiny",
-      "model_path": "models/faster-whisper-tiny",
-      "processor": "openai/whisper-tiny",
-      "energy_threshold": 300,
-      "record_timeout": 3,
-      "phrase_timeout": 3
+      "model": "base",
+      "energy_threshold": 1000,
+      "record_timeout": 2,
+      "phrase_timeout": 3,
+      "default_microphone":"pulse"
     },
     "translate": {
       "translator": "models/nllb-200-distilled-600M",

@@ -35,7 +35,7 @@
         eventSource.onmessage = function(event) {
             const translation = event.data;
             // get ride of the new line character
-            translation = translation.replace(/(\r\n|\n|\r)/gm, "");
+            //translation = translation.replace(/(\r\n|\n|\r)/gm, "");
 
             // Create a new h1 element for each translation
             const translationElement = document.createElement('h1');
@@ -50,14 +50,14 @@
 
         function animateText(element) {
 
-            element.innerHTML = element.textContent.replace(/\S/g, "<span class='letter'>$&</span>");
+            //element.innerHTML = element.textContent.replace(/\S/g, "<span class='letter'>$&</span>");
 
             anime.timeline({loop: false})
                 .add({
                     targets: element,
                     opacity: [0,1],
                     easing: "easeInOutQuad",
-                    duration: 2250,
+                    duration: 5000,
                 }).add({
                     targets: element,
                     opacity: 0,

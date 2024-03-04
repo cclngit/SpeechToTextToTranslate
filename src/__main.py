@@ -118,8 +118,8 @@ def run_pipeline():
     translator = "models/nllb-200-distilled-600M" # The model to use for translation
     tokenizer = "facebook/nllb-200-distilled-600M" # The tokenizer to use for translation
     device = "cpu" # The device to use for translation
-    src_lang = "fra_Latn"
-    tgt_lang = "eng_Latn"
+    src_lang = "eng_Latn"
+    tgt_lang = "fra_Latn"
 
     os.makedirs(recordings_dir, exist_ok=True)
     os.makedirs(transcriptions_dir, exist_ok=True)

@@ -10,10 +10,9 @@ from queue import Queue
 from time import sleep
 from sys import platform
 
-
-def main():
+def transcribe(queue):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", default="medium", help="Model to use",
+    parser.add_argument("--model", default="base", help="Model to use",
                         choices=["tiny", "base", "small", "medium", "large"])
     parser.add_argument("--non_english", action='store_true',
                         help="Don't use the english model.")
@@ -129,13 +128,24 @@ def main():
 
                 # Infinite loops are bad for processors, must sleep.
                 sleep(0.25)
+                
+                # Inside the while loop, after transcription
+                print("Transcription:", text)
+                
+                # Put the transcription into the queue.
+                queue.put(text)
+                
         except KeyboardInterrupt:
             break
 
     print("\n\nTranscription:")
     for line in transcription:
         print(line)
-
-
+    
 if __name__ == "__main__":
-    main()
+    q = Queue()
+    transcribe(q)
+    print("Transcription:", q.get())
+    print("Transcription:", q.get())
+
+# command line usage example: python transcribr.py --model medium --non_english

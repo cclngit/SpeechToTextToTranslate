@@ -5,44 +5,28 @@ import threading
 import json
 import time
 import datetime
-import sounddevice as sd
-import wavio as wv
 import numpy as np
 import speech_recognition as sr
-import ctranslate2
-import transformers
 import whisper
 import torch
 from collections import deque
 import server
+import ctranslate2
+import transformers
 
 
 def delete_old_files(directory, num_to_keep=10):
     files = sorted(glob.iglob(directory), key=os.path.getctime, reverse=True)
+    
     for i in range(num_to_keep, len(files)):
         os.remove(files[i])
+    
     print("Old files deleted")
 
 
-def record_and_save(queue1, recordings_dir, freq, duration):
-    try:
-        while True:
-            recording = sd.rec(int(duration * freq), samplerate=freq, channels=2)
-            sd.wait()
-            filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".wav"
-            wv.write(f"{recordings_dir}/{filename}", recording, freq, sampwidth=2)
-            print(f"Recording saved as {filename}")
-            queue1.put(f"{recordings_dir}/{filename}")
-            delete_old_files(f"{recordings_dir}/*.wav")
-    
-    except Exception as e:
-        print(f"Error recording: {e}")
-
-
-def transcribe(queue1, model, energy_threshold, record_timeout, phrase_timeout):
+def transcribe(queue1, queue2, model, energy_threshold, record_timeout, phrase_timeout):
     try:
         audio_model = whisper.load_model(model)
-
         phrase_time = None
         transcription = deque(maxlen=10)
         recorder = sr.Recognizer()
@@ -59,15 +43,19 @@ def transcribe(queue1, model, energy_threshold, record_timeout, phrase_timeout):
         recorder.listen_in_background(source, record_callback, phrase_time_limit=record_timeout)
 
         while True:
-            now = datetime.datetime.now(datetime.UTC)
+            now = datetime.datetime.utcnow()
+            
             if not queue1.empty():
                 phrase_complete = False
+                
                 if phrase_time and now - phrase_time > datetime.timedelta(seconds=phrase_timeout):
                     phrase_complete = True
                 phrase_time = now
-                
+
                 audio_data = b''.join(queue1.queue)
                 queue1.queue.clear()
+
+                # Convert in-ram buffer to something the model can use directly without needing a temp file.
                 audio_np = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0
 
                 result = audio_model.transcribe(audio_np, fp16=torch.cuda.is_available())
@@ -79,10 +67,13 @@ def transcribe(queue1, model, energy_threshold, record_timeout, phrase_timeout):
                     transcription[-1] = transcription_text
 
                 os.system('cls' if os.name == 'nt' else 'clear')
+                
                 for line in transcription:
                     print(line)
                 print('', end='', flush=True)
                 time.sleep(0.25)
+                
+                queue2.put(transcription_text)
     
     except Exception as e:
         print(f"Error transcribing: {e}")
@@ -96,8 +87,10 @@ def translate(queue2, queue3, translations_dir, src_lang, tgt_lang, translator, 
 
         while True:
             transcription = queue2.get()
+            
             if not transcription in translations:
                 temp_file = f"temp_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt"
+                
                 with open(temp_file, "w") as f:
                     f.write(transcription)
 
@@ -107,10 +100,10 @@ def translate(queue2, queue3, translations_dir, src_lang, tgt_lang, translator, 
                 target = results[0].hypotheses[0][1:]
 
                 print(tokenizer.decode(tokenizer.convert_tokens_to_ids(target)))
-                
                 queue3.put(tokenizer.decode(tokenizer.convert_tokens_to_ids(target)))
 
                 filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".txt"
+                
                 with open(f"{translations_dir}/{filename}", "w") as f:
                     f.write(tokenizer.decode(tokenizer.convert_tokens_to_ids(target)))
 
@@ -122,49 +115,10 @@ def translate(queue2, queue3, translations_dir, src_lang, tgt_lang, translator, 
         print(f"Error translating: {e}")
 
 
-def delete_old_files(directory, num_to_keep=10):
-    files = sorted(glob.iglob(directory), key=os.path.getctime, reverse=True)
-    for i in range(num_to_keep, len(files)):
-        os.remove(files[i])
-    print("Old files deleted")
-
-
 def load_config(filename):
     with open(filename, 'r') as f:
         config = json.load(f)
     return config
-
-
-def record_and_save_wrapper(queue1, recordings_dir, freq, duration):
-    while True:
-        try:
-            record_and_save(queue1, recordings_dir, freq, duration)
-        except Exception as e:
-            print(f"Recording thread failed: {e}")
-
-
-def transcribe_wrapper(queue1, model, energy_threshold, record_timeout, phrase_timeout):
-    while True:
-        try:
-            transcribe(queue1, model, energy_threshold, record_timeout, phrase_timeout)
-        except Exception as e:
-            print(f"Transcription thread failed: {e}")
-
-
-def translate_wrapper(queue2, queue3, translations_dir, src_lang, tgt_lang, translator, tokenizer, device):
-    while True:
-        try:
-            translate(queue2, queue3, translations_dir, src_lang, tgt_lang, translator, tokenizer, device)
-        except Exception as e:
-            print(f"Translation thread failed: {e}")
-
-
-def server_wrapper(queue3):
-    while True:
-        try:
-            server.run_server(queue3)
-        except Exception as e:
-            print(f"Server thread failed: {e}")
 
 
 def run_pipeline(config):
@@ -172,10 +126,6 @@ def run_pipeline(config):
     transcriptions_dir = config["transcriptions_dir"]
     translations_dir = config["translations_dir"]
     num_to_keep = config["num_to_keep"]
-
-    record_config = config["record"]
-    freq = record_config["freq"]
-    duration = record_config["duration"]
 
     transcribe_config = config["transcribe"]
     model = transcribe_config["model"]
@@ -199,22 +149,18 @@ def run_pipeline(config):
     queue3 = queue.Queue()
 
     threads = [
-        threading.Thread(target=record_and_save_wrapper, args=(queue1, recordings_dir, freq, duration)),
-        threading.Thread(target=transcribe_wrapper, args=(queue1, model, energy_threshold,
-                                                          record_timeout, phrase_timeout)),
-        threading.Thread(target=translate_wrapper, args=(queue2, queue3, translations_dir, src_lang,
-                                                         tgt_lang, translator, tokenizer, device)),
-        threading.Thread(target=server_wrapper, args=(queue3,))
+        threading.Thread(target=transcribe, args=(queue1, queue2, model, energy_threshold,
+                                                   record_timeout, phrase_timeout)),
+        threading.Thread(target=translate, args=(queue2, queue3, translations_dir, src_lang,
+                                                 tgt_lang, translator, tokenizer, device)),
+        threading.Thread(target=server.run_server, args=(queue3,))
     ]
 
     for thread in threads:
         thread.start()
 
-    while True:
-        for thread in threads:
-            if not thread.is_alive():
-                thread.start()
-        time.sleep(10)
+    for thread in threads:
+        thread.join()
 
 
 if __name__ == '__main__':

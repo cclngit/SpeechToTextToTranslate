@@ -13,7 +13,6 @@ from collections import deque
 import librosa
 import server
 
-
 def delete_old_files(directory, num_to_keep=10):
     files = sorted(glob.iglob(directory), key=os.path.getctime, reverse=True)
     for i in range(num_to_keep, len(files)):
@@ -34,14 +33,6 @@ def record_and_save(queue1, recordings_dir, freq, duration):
     
     except Exception as e:
         print(f"Error recording: {e}")
-
-
-def delete_old_files(directory, num_to_keep=10):
-    files = sorted(glob.iglob(directory), key=os.path.getctime, reverse=True)
-    for i in range(num_to_keep, len(files)):
-        os.remove(files[i])
-    print("Old files deleted")
-
 
 def transcribe(queue1, queue2, processor, model_path):
     try:
@@ -77,14 +68,6 @@ def transcribe(queue1, queue2, processor, model_path):
     except Exception as e:
         print(f"Error transcribing: {e}")
 
-
-def delete_old_files(directory, num_to_keep=10):
-    files = sorted(glob.iglob(directory), key=os.path.getctime, reverse=True)
-    for i in range(num_to_keep, len(files)):
-        os.remove(files[i])
-    print("Old files deleted")
-
-
 def translate(queue1,queue2, translations_dir, src_lang, tgt_lang, translator, tokenizer, device="cpu"):
     
     try:
@@ -118,13 +101,6 @@ def translate(queue1,queue2, translations_dir, src_lang, tgt_lang, translator, t
     
     except Exception as e:
         print(f"Error translating: {e}")
-
-
-def delete_old_files(directory, num_to_keep=10):
-    files = sorted(glob.iglob(directory), key=os.path.getctime, reverse=True)
-    for i in range(num_to_keep, len(files)):
-        os.remove(files[i])
-    print("Old files deleted")
 
 def load_config(filename):
     with open(filename, 'r') as f:
