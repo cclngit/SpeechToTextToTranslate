@@ -1,5 +1,3 @@
-import os
-import glob
 import librosa
 import transformers
 import ctranslate2

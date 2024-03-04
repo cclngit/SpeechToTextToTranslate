@@ -1,5 +1,4 @@
 import os
-import glob
 import queue
 import threading
 import record_and_save

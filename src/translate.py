@@ -1,6 +1,5 @@
 import datetime
 import os
-import glob
 import transformers
 import ctranslate2
 from collections import deque
