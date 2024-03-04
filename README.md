@@ -21,7 +21,7 @@ Ensure you have the following dependencies installed:
 2. Navigate to the project directory:
 
     ```bash
-    cd speech-translation-pipeline
+    cd SpeechToTextToTranslate
     ```
 
 3. Create a virtual environment:
@@ -66,7 +66,7 @@ Ensure you have the following dependencies installed:
 Run the pipeline script:
 
 ```bash
-python pipeline.py
+python src/main.py
 ```
 
 ## Configuration
