@@ -13,10 +13,17 @@ git clone -b main https://github.com/cclngit/SpeechToTextToTranslate.git
 cd SpeechToTextToTranslate
 ```
 
-1. Install the dependencies:
+2. Install the dependencies:
 
 ```bash
 pip install -r requirements.txt
+```
+
+3. Create a directory for the models and run convert_file.sh:
+
+```bash
+mkdir models
+bash convert_file.sh
 ```
 
 ## Usage
