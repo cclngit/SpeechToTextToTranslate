@@ -1,15 +1,8 @@
 import sounddevice as sd
 import wavio as wv
 import datetime
-import os
-import glob
 import queue
-
-def delete_old_files(directory, num_to_keep=10):
-    files = sorted(glob.iglob(directory), key=os.path.getctime, reverse=True)
-    for i in range(num_to_keep, len(files)):
-        os.remove(files[i])
-    print("Old files deleted")
+import utils
 
 
 def record_and_save(queue1, recordings_dir, freq, duration):
@@ -21,7 +14,7 @@ def record_and_save(queue1, recordings_dir, freq, duration):
             wv.write(f"{recordings_dir}/{filename}", recording, freq, sampwidth=2)
             print(f"Recording saved as {filename}")
             queue1.put(f"{recordings_dir}/{filename}")
-            delete_old_files(f"{recordings_dir}/*.wav")
+            utils.delete_old_files(f"{recordings_dir}/*.wav")
     
     except Exception as e:
         print(f"Error recording: {e}")

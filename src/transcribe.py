@@ -4,13 +4,7 @@ import librosa
 import transformers
 import ctranslate2
 from collections import deque
-
-
-def delete_old_files(directory, num_to_keep=10):
-    files = sorted(glob.iglob(directory), key=os.path.getctime, reverse=True)
-    for i in range(num_to_keep, len(files)):
-        os.remove(files[i])
-    print("Old files deleted")
+import utils
 
 
 def transcribe(queue1, queue2, processor, model_path):
@@ -43,6 +37,7 @@ def transcribe(queue1, queue2, processor, model_path):
 
                 queue2.put(transcription)
                 transcribed.append(recording)
+                utils.delete_old_files("recordings/*.wav")
                 
     except Exception as e:
         print(f"Error transcribing: {e}")
