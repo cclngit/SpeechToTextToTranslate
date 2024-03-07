@@ -2,6 +2,8 @@
 
 This repository contains a Python script for a speech processing pipeline. The pipeline includes recording audio, transcribing the audio, translating the transcription, and serving the translated text through a server.
 
+Using AI: openAI/Whisper & facebook/nllb
+
 ## Requirements
 
 Ensure you have the following dependencies installed:
